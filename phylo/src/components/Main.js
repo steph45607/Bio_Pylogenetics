@@ -1,12 +1,13 @@
-// Main.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import Navbar from './navbar';
 import '../styles/main.css';
+import axios from "axios";
+import {BACKEND_LINK} from './Const';
 
 function Main() {
   const [textInput, setTextInput] = useState('');
-  const [selectedOption, setSelectedOption] = useState('option1'); // Initial selection
+  const [selectedOption, setSelectedOption] = useState('option1');
+  const [image, setImage] = useState('');
 
   const handleInputChange = (e) => {
     setTextInput(e.target.value);
@@ -17,11 +18,18 @@ function Main() {
   };
 
   const handleButtonClick = () => {
-    // Add your logic for handling the user input or triggering image generation
     console.log('User input:', textInput);
     console.log('Selected option:', selectedOption);
-    // You can add your image generation logic here
   };
+
+  useEffect(() => {
+    axios
+      .get(BACKEND_LINK + '/getimage')
+      .then(response => {
+        setImage(response.data.image);
+        console.log(image);
+      });
+  }, []);
 
   return (
     <div className="App">
@@ -71,7 +79,9 @@ function Main() {
             </button>
           </div>
         </div>
-        <div className="image-box"></div>
+        <div className="image-box">
+          <img src={`data:image/png;base64,${image}`} alt="Graph" />
+        </div>
       </div>
     </div>
   );
