@@ -1,13 +1,40 @@
-import React, { useState, useEffect} from 'react';
-import Navbar from './navbar';
-import '../styles/main.css';
+import React, { useState, useEffect } from "react";
+import Navbar from "./navbar";
+import "../styles/main.css";
 import axios from "axios";
-import {BACKEND_LINK} from './Const';
+import { BACKEND_LINK } from "./Const";
 
 function Main() {
-  const [textInput, setTextInput] = useState('');
-  const [selectedOption, setSelectedOption] = useState('option1');
-  const [image, setImage] = useState('');
+  const [textInput, setTextInput] = useState("");
+  const [selectedOption, setSelectedOption] = useState("option1");
+  const [image, setImage] = useState("");
+  const [file, setFile] = useState(null);
+
+  const handleFileInputChange = (event) => {
+    console.log(event.target.files);
+    setFile(event.target.files[0]);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const endpoint = "http://localhost:8000/upload";
+      const response = await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+      });
+      if (response.ok) {
+        console.log("its ok");
+      } else {
+        console.error("not ok");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleInputChange = (e) => {
     setTextInput(e.target.value);
@@ -18,17 +45,19 @@ function Main() {
   };
 
   const handleButtonClick = () => {
-    console.log('User input:', textInput);
-    console.log('Selected option:', selectedOption);
+    console.log("User input:", textInput);
+    console.log("Selected option:", selectedOption);
+  };
+
+  const handleUpload = () => {
+    console.log();
   };
 
   useEffect(() => {
-    axios
-      .get(BACKEND_LINK + '/getimage')
-      .then(response => {
-        setImage(response.data.image);
-        console.log(image);
-      });
+    axios.get(BACKEND_LINK + "/getimage").then((response) => {
+      setImage(response.data.image);
+      console.log(image);
+    });
   }, []);
 
   return (
@@ -41,8 +70,8 @@ function Main() {
             value={textInput}
             onChange={handleInputChange}
           />
-          <div className='container2'>
-            <div class="radio-button-container">
+          <div className="container2">
+            {/* <div class="radio-button-container">
                 <div class="radio-button">
                     <input
                         type="radio"
@@ -73,14 +102,20 @@ function Main() {
                         FASTA
                     </label>
                 </div>
-            </div>
+            </div> */}
             <button onClick={handleButtonClick}>
-                <span>Generate Image</span>
+              <span>Generate Image</span>
             </button>
+
+            <from onSubmit={handleSubmit}>
+              <input type="file" onChange={handleFileInputChange} />
+              <button type="submit">Upload</button>
+            </from>
           </div>
         </div>
         <div className="image-box">
-          <img src={`data:image/png;base64,${image}`} alt="Graph" />
+          {/* <img src={`data:image/png;base64,${image}`} alt="Graph" /> */}
+          {file && <p>{file.name}</p>}
         </div>
       </div>
     </div>
