@@ -53,37 +53,65 @@ def create_img():
     img_buf.close()
     return img_base64
 
-def smith_waterman_distance(seq1, seq2):
-    #? m = match score of identical chars
-    #? s = open and extend gap penalty for both sequences
-    #? parameters = (seq1, seq1, match, mismatch, opening a gap, extending a gap)
-    #// scores from https://gist.github.com/radaniba/11019717 
-    alignment = pairwise2.align.localms(seq1.seq, seq2.seq, 2, -1, -1, -1)
-    #? gap score
-    # score = alignment[0].score
-    # return len(seq1) + len(seq2) - score * 2
-    change = 0
+def align_local(seqi, seqii, match, mismatch, open_gap, gap):
 
-    if alignment[0].seqA == seq1.seq:
-        # notchange.append([alignment[0].seqA, seq1.id])
-        pass
-    else:
-        change=[alignment[0].seqA, seq1.id]
+    c_seqi = np.array(list(seqi.seq))
+    c_seqii = np.array(list(seqii.seq))
 
-    if alignment[0].seqB == seq2.seq:
-        # notchange.append([alignment[0].seqB, seq2.id])
-        pass
-    else:
-        change=[alignment[0].seqB, seq2.id]
-    print("change", change)
-    # print("nochange", notchange)
-    # pair = [alignment[0].seqA, seq1.id]
-    
-    if change is None:
-        pass
-    else:
-        return change
-    # return change
+    ni = len(c_seqi)
+    nii = len(c_seqii)
+
+    # Initialize the Smith-Waterman matrix
+
+    M = np.zeros((ni + 1, nii + 1))
+
+    # Compute the Smith-Waterman matrix
+
+    for i in range(1, ni + 1):
+        for j in range(1, nii + 1):
+            diag = M[i - 1, j - 1]
+            ver = M[i - 1, j]
+            hor = M[i, j - 1]
+            diag += match if (c_seqi[i - 1] == c_seqii[j - 1]) else mismatch
+            ver += open_gap if (i == 1) else gap
+            hor += open_gap if (j == 1) else gap
+            M[i, j] = max([diag, ver, hor, 0])
+
+    # Find the optimal local alignment
+    i, j = np.unravel_index(M.argmax(), M.shape)
+    al_seqi = []
+    al_seqii = []
+
+    while i > 0 and j > 0 and M[i, j] > 0:
+        diag = M[i - 1, j - 1]
+        ver = M[i - 1, j]
+        hor = M[i, j - 1]
+        
+
+        if diag >= ver and diag >= hor:
+            i -= 1
+            j -= 1
+            al_seqi.append(c_seqi[i])
+            al_seqii.append(c_seqii[j])
+
+        elif hor > diag and hor > ver:
+            j -= 1
+            al_seqii.append(c_seqii[j])
+            al_seqi.append('-')
+
+
+        elif ver > diag and ver > hor:
+            i -= 1
+            al_seqi.append(c_seqi[i])
+            al_seqii.append('-')
+            
+            
+    al_seqi = [''.join(al_seqi)[::-1], seqi.id]
+    al_seqii = [''.join(al_seqii)[::-1], seqii.id]
+
+    pair = [al_seqi, al_seqii]
+    # print("pair", pair)
+    return pair
 
 def needleman_wunsch(seq1, seq2):
     #? m = match score of identical chars
@@ -125,8 +153,6 @@ def readFasta():
     return seq
 
 def makeFastaNW(seq):
-    tracemalloc.start()
-    start = time.time()
 
     num_seqs = len(seq)
     print(num_seqs)
@@ -174,48 +200,52 @@ def makeFastaNW(seq):
     return phylo()
 
 def makeFastaSW(seq):
-    tracemalloc.start()
-    start = time.time()
 
     num_seqs = len(seq)
     print(num_seqs)
 
     alignment = []
+    aligns = []
+    aligned = []
     # print("test")
     # print(seq[0].seq)
 
     for i in range(num_seqs):
         for j in range(i+1, num_seqs):
-            alignment.append(smith_waterman_distance(seq[i], seq[j]))
-            # alignment.append(needleman_wunsch(sequences[i], sequences[j])[0].seqB)
-    # print(alignment)
-
-    while 0 in alignment:
-        alignment.remove(0)
+            alignment.append(align_local(seq[i], seq[j], 2, -1, -2, -1))
     
-    print(alignment)
+    # print("ALINGMENT", alignment)
+    for i in alignment:
+            aligns.append(i[1])
+
+    aligns.insert(0, alignment[0][0])
+    # print("ALIGNS", aligns)
+
+    ml = 0
+    for i in aligns:
+        if len(i[0]) > ml:
+            ml = len(i[0])
+        
+    for i in aligns:
+        if len(i[0]) < ml:
+            i[0] = i[0] + "-" * (ml - len(i[0]))
+            aligned.append(i)
+        else:
+            aligned.append(i)
+
+    print("")
+    print("ALIGNED", aligned)
 
     final = []
     final_seq = []
 
-
-    for i in reversed(range(len(alignment))):
-        if alignment[i][1] in final:
+    for i in reversed(range(len(aligned))):
+        if aligned[i][1] in final:
             pass
         else:
-            final.append(alignment[i][1])
-            final_seq.append(alignment[i][0])
+            final.append(aligned[i][1])
+            final_seq.append(aligned[i][0])
     
-    print(final)
-    print(final_seq)
-
-    for i in seq:
-        if i.id in final:
-            pass
-        else:
-            final.append(i.id)
-            final_seq.append(str(i.seq))
-
     print("final", final)
     print("final_seq", final_seq)
 
