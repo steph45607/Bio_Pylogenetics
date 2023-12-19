@@ -36,24 +36,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def create_img():
-    x = np.linspace(0, 2 * np.pi, 100)
-    y = np.sin(x)
-
-    plt.plot(x, y)
-    plt.title('Sine Wave')
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
-
-    img_buf = io.BytesIO()
-    plt.savefig(img_buf, format='png')
-    plt.close()
-
-    img_base64 = base64.b64encode(img_buf.getvalue()).decode('utf-8')
-    img_buf.close()
-    return img_base64
-
-def align_local(seqi, seqii, match, mismatch, open_gap, gap):
+def smith_waterman(seqi, seqii, match, mismatch, open_gap, gap):
 
     c_seqi = np.array(list(seqi.seq))
     c_seqii = np.array(list(seqii.seq))
@@ -61,11 +44,7 @@ def align_local(seqi, seqii, match, mismatch, open_gap, gap):
     ni = len(c_seqi)
     nii = len(c_seqii)
 
-    # Initialize the Smith-Waterman matrix
-
     M = np.zeros((ni + 1, nii + 1))
-
-    # Compute the Smith-Waterman matrix
 
     for i in range(1, ni + 1):
         for j in range(1, nii + 1):
@@ -77,7 +56,6 @@ def align_local(seqi, seqii, match, mismatch, open_gap, gap):
             hor += open_gap if (j == 1) else gap
             M[i, j] = max([diag, ver, hor, 0])
 
-    # Find the optimal local alignment
     i, j = np.unravel_index(M.argmax(), M.shape)
     al_seqi = []
     al_seqii = []
@@ -212,7 +190,7 @@ def makeFastaSW(seq):
 
     for i in range(num_seqs):
         for j in range(i+1, num_seqs):
-            alignment.append(align_local(seq[i], seq[j], 2, -1, -2, -1))
+            alignment.append(smith_waterman(seq[i], seq[j], 2, -1, -2, -1))
     
     # print("ALINGMENT", alignment)
     for i in alignment:
@@ -253,7 +231,8 @@ def makeFastaSW(seq):
     for i in range(len(final)):
         file.write(">"+final[i]+"\n"+final_seq[i]+"\n")
     file.close()
-    phylo()
+
+    return phylo()
 
 def phylo():
     align = AlignIO.read("41ign.fasta", "fasta")
@@ -276,10 +255,10 @@ def phylo():
     return img_base64
     # plt.savefig('phyl0.png')
     
-@app.get('/getimage')
-async def get_img(background_tasks: BackgroundTasks):
-    img_base64 = create_img()
-    return {"image": img_base64}
+# @app.get('/getimage')
+# async def get_img(background_tasks: BackgroundTasks):
+#     img_base64 = create_img()
+#     return {"image": img_base64}
 
 @app.post('/uploadnw')
 async def upload(file: UploadFile):
@@ -299,5 +278,5 @@ async def upload(file: UploadFile):
         while content := await file.read(1024):
             await out.write(content)
     # run the test function
-    makeFastaSW(readFasta())
-    return "ok"
+    img = makeFastaSW(readFasta())
+    return {"image": img}

@@ -28,29 +28,6 @@ function Main() {
     event.preventDefault();
   };
 
-  // const handleSubmit = async (event) => {
-  //   event.preventDefault();
-  //   const formData = new FormData();
-  //   formData.append("file", file);
-
-  //   try {
-  //     const endpoint = "http://localhost:8000/uploadnw";
-  //     const response = await fetch(endpoint, {
-  //       method: "POST",
-  //       body: formData,
-  //     });
-  //     // if (response.ok) {
-  //     //   console.log("its ok");
-  //     // } else {
-  //     //   console.error("not ok");
-  //     // }
-  //     setImage(response.data.image);
-  //     console.log(image)
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
-
   const handleSubmit = async(e) => {
     e.preventDefault();
     const formData = new FormData();
@@ -71,10 +48,6 @@ function Main() {
       })
   }
 
-  const handleInputChange = (e) => {
-    setTextInput(e.target.value);
-  };
-
   const handleOptionChange = (e) => {
     setSelectedOption(e.target.value);
 
@@ -86,35 +59,31 @@ function Main() {
   };
 
   const handleButtonClick = () => {
-    console.log("User input:", textInput);
-    console.log("Selected option:", selectedOption);
-  };
+    const suggestedFilename = prompt('Enter a filename:', 'image');
+  
+    if (suggestedFilename) {
 
-  const handleUpload = () => {
-    console.log();
+      const byteCharacters = atob(image);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/png' });
+  
+      const downloadLink = document.createElement('a');
+      downloadLink.href = URL.createObjectURL(blob);
+      downloadLink.download = suggestedFilename+'.png';
+      downloadLink.click();
+    }
   };
+  
 
   return (
     <div className="App">
       <Navbar />
       <div className="container1">
         <div className="user-input-section">
-          {/* <textarea
-            placeholder="Input sequence here..."
-            value={textInput}
-            onChange={handleInputChange}
-          /> */}
-          {/* <form onSubmit={handleSubmit}>
-              <div
-                className="file-drop-area"
-                onDrop={handleFileDrop}
-                onDragOver={handleFileDragOver}
-              >
-                <input type="file" onChange={handleFileInputChange} />
-                <p>Drag & Drop file here</p>
-                {confirmation && <p>{confirmation}</p>}
-              </div>
-          </form> */}
           <div className="formbox">
             <form className="form"onSubmit={handleSubmit}>
               <span class="form-title">Upload your file</span>
@@ -177,8 +146,8 @@ function Main() {
         </div>
         <div className="image-box">
           <img src={`data:image/png;base64,${image}`} alt="Graph" className="phylograph"/> 
-          <button onClick={handleButtonClick} className="savebutton">
-              Save image
+          <button onClick={handleButtonClick} className="imagebutton">
+              <span>Save image</span>
           </button>
         </div>
       </div>
