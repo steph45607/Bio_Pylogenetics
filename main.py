@@ -84,7 +84,6 @@ def smith_waterman_distance(seq1, seq2):
     else:
         return change
     # return change
-    
 
 def needleman_wunsch(seq1, seq2):
     #? m = match score of identical chars
@@ -171,7 +170,8 @@ def makeFastaNW(seq):
     for i in range(len(final)):
         file.write(">"+final[i]+"\n"+final_seq[i]+"\n")
     file.close()
-    phylo()
+
+    return phylo()
 
 def makeFastaSW(seq):
     tracemalloc.start()
@@ -236,7 +236,15 @@ def phylo():
     axes = fig.add_subplot(1, 1, 1)
     Phylo.draw(tree)
     plt.show()
-    plt.savefig('phyl0.png')
+
+    img_buf = io.BytesIO()
+    plt.savefig(img_buf, format='png')
+    plt.close()
+
+    img_base64 = base64.b64encode(img_buf.getvalue()).decode('utf-8')
+    img_buf.close()
+    return img_base64
+    # plt.savefig('phyl0.png')
     
 @app.get('/getimage')
 async def get_img(background_tasks: BackgroundTasks):
@@ -250,8 +258,9 @@ async def upload(file: UploadFile):
         while content := await file.read(1024):
             await out.write(content)
     # run the test function
-    makeFastaNW(readFasta())
-    return "ok"
+    # makeFastaNW(readFasta())
+    img = makeFastaNW(readFasta())
+    return {"image": img}
 
 @app.post('/uploadsw')
 async def upload(file: UploadFile):

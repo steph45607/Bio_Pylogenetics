@@ -15,26 +15,48 @@ function Main() {
     setFile(event.target.files[0]);
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const formData = new FormData();
-    formData.append("file", file);
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   const formData = new FormData();
+  //   formData.append("file", file);
 
-    try {
-      const endpoint = "http://localhost:8000/upload";
-      const response = await fetch(endpoint, {
-        method: "POST",
-        body: formData,
-      });
-      if (response.ok) {
-        console.log("its ok");
-      } else {
-        console.error("not ok");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  //   try {
+  //     const endpoint = "http://localhost:8000/uploadnw";
+  //     const response = await fetch(endpoint, {
+  //       method: "POST",
+  //       body: formData,
+  //     });
+  //     // if (response.ok) {
+  //     //   console.log("its ok");
+  //     // } else {
+  //     //   console.error("not ok");
+  //     // }
+  //     setImage(response.data.image);
+  //     console.log(image)
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+  const handleSubmit = async(e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("file", file)
+
+    axios
+      .post(BACKEND_LINK + '/uploadnw', formData, {
+        headers:{
+          "accept":"application/json"
+        }
+      })
+      .then((response) => {
+        setImage(response.data.image);
+        console.log(image);
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+  }
 
   const handleInputChange = (e) => {
     setTextInput(e.target.value);
@@ -53,12 +75,12 @@ function Main() {
     console.log();
   };
 
-  useEffect(() => {
-    axios.get(BACKEND_LINK + "/getimage").then((response) => {
-      setImage(response.data.image);
-      console.log(image);
-    });
-  }, []);
+  // useEffect(() => {
+  //   axios.get(BACKEND_LINK + "/getimage").then((response) => {
+  //     setImage(response.data.image);
+  //     console.log(image);
+  //   });
+  // }, []);
 
   return (
     <div className="App">
@@ -109,13 +131,13 @@ function Main() {
 
             <from onSubmit={handleSubmit}>
               <input type="file" onChange={handleFileInputChange} />
-              <button type="submit">Upload</button>
+              <button type="submit" onClick={handleSubmit}>Upload</button>
             </from>
           </div>
         </div>
         <div className="image-box">
-          {/* <img src={`data:image/png;base64,${image}`} alt="Graph" /> */}
-          {file && <p>{file.name}</p>}
+          <img src={`data:image/png;base64,${image}`} alt="Graph" /> 
+          {/* {file && <p>{file.name}</p>} */}
         </div>
       </div>
     </div>
