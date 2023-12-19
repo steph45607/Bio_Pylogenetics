@@ -6,13 +6,26 @@ import { BACKEND_LINK } from "./Const";
 
 function Main() {
   const [textInput, setTextInput] = useState("");
-  const [selectedOption, setSelectedOption] = useState("option1");
+  const [selectedOption, setSelectedOption] = useState("");
   const [image, setImage] = useState("");
   const [file, setFile] = useState(null);
+  const [confirmation, setConfirmation] = useState("");
+  const [backendEndpoint, setBackendEndpoint] = useState("");
 
   const handleFileInputChange = (event) => {
     console.log(event.target.files);
     setFile(event.target.files[0]);
+  };
+
+  const handleFileDrop = (event) => {
+    event.preventDefault();
+    const droppedFile = event.dataTransfer.files[0];
+    setFile(droppedFile);
+    setConfirmation(`File "${droppedFile.name}" has been successfully dropped.`);
+  };
+
+  const handleFileDragOver = (event) => {
+    event.preventDefault();
   };
 
   // const handleSubmit = async (event) => {
@@ -44,7 +57,7 @@ function Main() {
     formData.append("file", file)
 
     axios
-      .post(BACKEND_LINK + '/uploadnw', formData, {
+      .post(BACKEND_LINK + backendEndpoint, formData, {
         headers:{
           "accept":"application/json"
         }
@@ -64,6 +77,12 @@ function Main() {
 
   const handleOptionChange = (e) => {
     setSelectedOption(e.target.value);
+
+    if (e.target.value === "SW") {
+      setBackendEndpoint("/uploadsw");
+    } else if (e.target.value === "NW") {
+      setBackendEndpoint("/uploadnw");
+    }
   };
 
   const handleButtonClick = () => {
@@ -75,38 +94,63 @@ function Main() {
     console.log();
   };
 
-  // useEffect(() => {
-  //   axios.get(BACKEND_LINK + "/getimage").then((response) => {
-  //     setImage(response.data.image);
-  //     console.log(image);
-  //   });
-  // }, []);
-
   return (
     <div className="App">
       <Navbar />
       <div className="container1">
         <div className="user-input-section">
-          <textarea
+          {/* <textarea
             placeholder="Input sequence here..."
             value={textInput}
             onChange={handleInputChange}
-          />
+          /> */}
+          {/* <form onSubmit={handleSubmit}>
+              <div
+                className="file-drop-area"
+                onDrop={handleFileDrop}
+                onDragOver={handleFileDragOver}
+              >
+                <input type="file" onChange={handleFileInputChange} />
+                <p>Drag & Drop file here</p>
+                {confirmation && <p>{confirmation}</p>}
+              </div>
+          </form> */}
+          <div className="formbox">
+            <form className="form"onSubmit={handleSubmit}>
+              <span class="form-title">Upload your file</span>
+              <p class="form-paragraph">
+                File should be a FASTA file
+              </p>
+              <label 
+                for="file-input" 
+                class="drop-container"
+                onDrop={handleFileDrop}
+                onDragOver={handleFileDragOver}  
+              >
+                <span class="drop-title">
+                  Drop files here
+                </span>
+                {confirmation && <p className="confirmationdrop">{confirmation}</p>}
+                or
+                <input type="file" accept=".fasta, .fa" required="" id="file-input" onChange={handleFileInputChange}/>
+              </label>
+            </form>
+          </div>
           <div className="container2">
-            {/* <div class="radio-button-container">
+            <div class="radio-button-container">
                 <div class="radio-button">
                     <input
                         type="radio"
                         class="radio-button__input"
                         name="radio-group"
                         id="radio1"
-                        value="option1"
-                        checked={selectedOption === 'option1'}
+                        value="SW"
+                        checked={selectedOption === 'SW'}
                         onChange={handleOptionChange}
                     />
                     <label class="radio-button__label" for="radio1">
                         <span class="radio-button__custom"></span>
-                        Newick
+                        Smith-Waterman
                     </label>
                 </div>
                 <div class="radio-button">
@@ -115,29 +159,27 @@ function Main() {
                         class="radio-button__input"
                         name="radio-group"
                         id="radio2"
-                        value="option2"
-                        checked={selectedOption === 'option2'}
+                        value="NW"
+                        checked={selectedOption === 'NW'}
                         onChange={handleOptionChange}
                     />
                     <label class="radio-button__label" for="radio2">
                         <span class="radio-button__custom"></span>
-                        FASTA
+                        Needleman-Wunsch
                     </label>
                 </div>
-            </div> */}
-            <button onClick={handleButtonClick}>
+            </div>
+
+            <button onClick={handleSubmit} className="imagebutton">
               <span>Generate Image</span>
             </button>
-
-            <from onSubmit={handleSubmit}>
-              <input type="file" onChange={handleFileInputChange} />
-              <button type="submit" onClick={handleSubmit}>Upload</button>
-            </from>
           </div>
         </div>
         <div className="image-box">
-          <img src={`data:image/png;base64,${image}`} alt="Graph" /> 
-          {/* {file && <p>{file.name}</p>} */}
+          <img src={`data:image/png;base64,${image}`} alt="Graph" className="phylograph"/> 
+          <button onClick={handleButtonClick} className="savebutton">
+              Save image
+          </button>
         </div>
       </div>
     </div>
